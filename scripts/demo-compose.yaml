@@ -1,0 +1,44 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: traceforge-mysql-demo
+    mem_limit: 768m
+    environment:
+      MYSQL_DATABASE: traceforge
+      MYSQL_USER: traceforge
+      MYSQL_PASSWORD: ${TF_DEMO_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${TF_DEMO_DB_PASSWORD}
+    healthcheck:
+      test: [CMD, mysqladmin, ping, -h, localhost]
+      interval: 5s
+      retries: 30
+    volumes: [traceforge_demo_mysql:/var/lib/mysql]
+  java:
+    image: traceforge-java:1
+    container_name: traceforge-java-demo
+    mem_limit: 512m
+    environment:
+      SPRING_DATASOURCE_PASSWORD: ${TF_DEMO_DB_PASSWORD}
+      JAVA_TOOL_OPTIONS: -Xmx256m
+    command: [java, -jar, /app/app.jar, --spring.config.location=file:/app/config/application.properties]
+    ports: ["127.0.0.1:9201:8080"]
+    volumes:
+      - ../examples/java/target/diagnostic-demo-1.0.0.jar:/app/app.jar:ro
+      - ../examples/java/config:/app/config:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+  backend:
+    image: traceforge-python:1
+    container_name: traceforge-http-demo
+    command: [python, -m, http.server, "8000", --bind, 0.0.0.0]
+    mem_limit: 64m
+  nginx:
+    image: nginx:1.28-alpine
+    container_name: traceforge-nginx-demo
+    ports: ["127.0.0.1:9202:80"]
+    volumes: ["../examples/deployment/config:/etc/nginx/conf.d:ro"]
+    depends_on: [backend]
+    mem_limit: 64m
+volumes:
+  traceforge_demo_mysql:

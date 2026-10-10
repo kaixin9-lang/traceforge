@@ -1,0 +1,56 @@
+services:
+  etcd:
+    image: gcr.io/etcd-development/etcd:v3.5.33
+    container_name: traceforge-etcd
+    command:
+      - /usr/local/bin/etcd
+      - --name=default
+      - --data-dir=/var/lib/milvus/etcd
+      - --listen-client-urls=http://127.0.0.1:2379
+      - --advertise-client-urls=http://127.0.0.1:2379
+      - --listen-peer-urls=http://127.0.0.1:2380
+      - --initial-advertise-peer-urls=http://localhost:2380
+      - --initial-cluster=default=http://localhost:2380
+    restart: unless-stopped
+    cpus: 1
+    mem_limit: 512m
+    # Milvus shares this network namespace; only its public ports are mapped.
+    ports: ["127.0.0.1:19530:19530", "127.0.0.1:9091:9091"]
+    volumes:
+      # Keep the metadata directory used by the former embedded etcd.
+      - traceforge_milvus:/var/lib/milvus
+    healthcheck:
+      test: [CMD, /usr/local/bin/etcdctl, --endpoints=http://127.0.0.1:2379, endpoint, health]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  milvus:
+    image: milvusdb/milvus:v3.0.2
+    container_name: traceforge-milvus
+    command: [milvus, run, standalone]
+    # Local etcd traffic does not depend on WSL's shared bridge firewall rules.
+    network_mode: service:etcd
+    restart: unless-stopped
+    depends_on:
+      etcd:
+        condition: service_healthy
+        restart: true
+    security_opt: [seccomp:unconfined]
+    cpus: 2
+    mem_limit: 3g
+    environment:
+      DEPLOY_MODE: STANDALONE
+      ETCD_USE_EMBED: "false"
+      ETCD_ENDPOINTS: 127.0.0.1:2379
+      COMMON_STORAGETYPE: local
+    volumes:
+      - traceforge_milvus:/var/lib/milvus
+      - ./milvus.yaml:/milvus/configs/user.yaml:ro
+      - ./milvus-health.sh:/milvus/configs/traceforge-health.sh:ro
+    healthcheck:
+      test: [CMD, bash, /milvus/configs/traceforge-health.sh]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+volumes:
+  traceforge_milvus:
