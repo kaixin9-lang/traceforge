@@ -1,0 +1,27 @@
+[project]
+name = "traceforge"
+version = "0.1.0"
+description = "Evidence-driven local troubleshooting workbench"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.115", "uvicorn>=0.30", "httpx>=0.28", "pydantic-settings>=2.7",
+  "python-multipart>=0.0.18", "aiosqlite>=0.21", "psutil>=7", "langchain>=1.4,<2",
+  "langchain-deepseek>=1.1", "langchain-ollama>=1", "langgraph>=1.2,<2",
+  "langgraph-checkpoint-sqlite>=3.0.1", "langchain-mcp-adapters>=0.2",
+  "fastmcp>=3.0,<3.1", "mcp>=1.26,<2", "pymilvus>=3.0,<3.1", "sentence-transformers>=6.1",
+  "torch==2.8.0", "pypdf>=6", "python-docx>=1.2", "beautifulsoup4>=4.13",
+  "ragas>=0.4.3,<0.5", "langchain-community==0.4.1", "openai>=2", "pytest>=9", "pytest-asyncio>=1.2"
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]

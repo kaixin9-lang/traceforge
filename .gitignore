@@ -1,0 +1,13 @@
+.env
+.venv/
+.cache/
+data/
+frontend/node_modules/
+frontend/dist/
+test-results/
+*.pyc
+__pycache__/
+.pytest_cache/
+frontend/test-results/
+frontend/tsconfig.tsbuildinfo
+examples/**/target/

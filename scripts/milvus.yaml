@@ -1,0 +1,12 @@
+etcd:
+  use:
+    embed: false
+  endpoints: 127.0.0.1:2379
+common:
+  storageType: local
+mq:
+  type: woodpecker
+woodpecker:
+  storage:
+    type: local
+    rootPath: /var/lib/milvus/woodpecker
